@@ -1,43 +1,36 @@
-import { Slot, useRouter, useSegments } from "expo-router";
+import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { getUserRole } from "../app/services/authService";
 import { auth } from "../firebaseConfig";
 
-export default function RootLayout() {
+export default function Index() {
   const [loading, setLoading] = useState(true);
-  const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        if (segments[0] !== "(auth)") {
+      if (user) {
+        try {
+          const role = await getUserRole(user.uid);
+          if (role === "admin") {
+            router.replace("/(admin)/home");
+          } else {
+            router.replace("/(barber)/home");
+          }
+        } catch (error) {
+          console.error(error);
           router.replace("/(auth)/login");
         }
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const role = await getUserRole(user.uid);
-
-        if (role === "admin" && segments[0] !== "(admin)") {
-          router.replace("/(admin)/home");
-        } 
-        else if (role === "barber" && segments[0] !== "(barber)") {
-          router.replace("/(barber)/home");
-        }
-      } catch (error) {
-        console.error(error);
+      } else {
         router.replace("/(auth)/login");
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [segments]);
+  }, []);
 
   if (loading) {
     return (
@@ -48,5 +41,5 @@ export default function RootLayout() {
     );
   }
 
-  return <Slot />;
+  return null;
 }

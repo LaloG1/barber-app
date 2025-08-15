@@ -15,3 +15,9 @@ export const loginUser = async (email: string, password: string) => {
   if (!docSnap.exists()) throw new Error("Usuario sin rol asignado");
   return { uid, ...docSnap.data() } as { uid: string; email: string; role: string };
 };
+
+export const getUserRole = async (uid: string) => {
+  const docSnap = await getDoc(doc(db, "users", uid));
+  if (!docSnap.exists()) throw new Error("Usuario sin rol asignado");
+  return docSnap.data().role as string;
+};
